@@ -1,5 +1,5 @@
 /*
- * OpenGLMainLoop.cpp
+ * OpenGLMain.cpp
  *
  *  Created on: Mar 25, 2011
  *      Author: Isaak Lim
@@ -50,7 +50,7 @@ gaussData gauss = {0, 0, 1, 1, 0};
 // --------------------------------------
 
 // vbo ----------------------------------
-GLuint gaussian = 0;
+GLuint gaussVBO = 0;
 enum {
    COVARIANCE,
    MU
@@ -78,8 +78,8 @@ void initOpenGL(int width, int height) {
    glMatrixMode(GL_MODELVIEW);
 
    // generate buffer objects
-   glGenBuffers(1, &gaussian);
-   glBindBuffer(GL_ARRAY_BUFFER, gaussian);
+   glGenBuffers(1, &gaussVBO);
+   glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
    //glBufferData(GL_ARRAY_BUFFER, 5*sizeof(float), pGaussian, GL_DYNAMIC_DRAW);
 }
 
@@ -113,19 +113,19 @@ void specialKeyPressed (int key, int x, int y) {
    case GLUT_KEY_RIGHT:
       switch (marked) {
       case SX:
-         if (s_x >= -0.1 && s_x < 0) // make sure we don't divide by zero
-            s_x += 0.2;
+         if (gauss.s_x >= -0.1 && gauss.s_x < 0) // make sure we don't divide by zero
+            gauss.s_x += 0.2;
          else
-            s_x += 0.1;
+            gauss.s_x += 0.1;
          break;
       case SY:
-         if (s_y >= -0.1 && s_y < 0) // make sure we don't divide by zero
-            s_y += 0.2;
+         if (gauss.s_y >= -0.1 && gauss.s_y < 0) // make sure we don't divide by zero
+            gauss.s_y += 0.2;
          else
-            s_y += 0.1;
+            gauss.s_y += 0.1;
          break;
       case C:
-         c += 0.01;
+         gauss.c += 0.01;
          break;
       default:
          if (menuStates[marked])
@@ -137,19 +137,19 @@ void specialKeyPressed (int key, int x, int y) {
    case GLUT_KEY_LEFT:
       switch (marked) {
       case SX:
-         if (s_x <= 0.1 && s_x > 0) // make sure we don't divide by zero
-            s_x -= 0.2;
+         if (gauss.s_x <= 0.1 && gauss.s_x > 0) // make sure we don't divide by zero
+            gauss.s_x -= 0.2;
          else
-            s_x -= 0.1;
+            gauss.s_x -= 0.1;
          break;
       case SY:
-         if (s_y <= 0.1 && s_y > 0) // make sure we don't divide by zero
-            s_y -= 0.2;
+         if (gauss.s_y <= 0.1 && gauss.s_y > 0) // make sure we don't divide by zero
+            gauss.s_y -= 0.2;
          else
-            s_y -= 0.1;
+            gauss.s_y -= 0.1;
          break;
       case C:
-         c -= 0.01;
+         gauss.c -= 0.01;
          break;
       default:
          if (menuStates[marked])
@@ -225,9 +225,9 @@ void drawMenu() {
       drawString("Wireframe: Off", width-((width/100)*15), 50, font, marked == WIREFRAME);
 
       ostringstream x, y, cStr;
-      x << "s_x: " << s_x;
-      y << "s_y: " << s_y;
-      cStr << "c: " << c;
+      x << "s_x: " << gauss.s_x;
+      y << "s_y: " << gauss.s_y;
+      cStr << "c: " << gauss.c;
       drawString(y.str(), width-((width/100)*15), 70, font, marked == SY);
       drawString(x.str(), width-((width/100)*15), 90, font, marked == SX);
       drawString(cStr.str(), width-((width/100)*15), 110, font, marked == C);
@@ -239,8 +239,8 @@ void drawOpenGLScene() {
    glLoadIdentity();
 
    // tempory calculation of bounding box (mu is 0,0)
-   float trace = s_x + s_y;
-   float det = s_x * s_y - pow(c, 2);
+   float trace = gauss.s_x + gauss.s_y;
+   float det = gauss.s_x * gauss.s_y - pow(gauss.c, 2);
    float eigenVal1 = (trace + sqrt(pow(trace, 2) - 4 * det))/2;
    float eigenVal2 = (trace - sqrt(pow(trace, 2) - 4 * det))/2;
 
@@ -250,8 +250,8 @@ void drawOpenGLScene() {
 
    // orientation of the first eigenvector in relation to the x axis
    float angleDeg = 0;
-   if (c) {
-      Vector eigenVec1 = Vector(eigenVal1 - s_y, c, 0);
+   if (gauss.c) {
+      Vector eigenVec1 = Vector(eigenVal1 - gauss.s_y, gauss.c, 0);
       //Vector eigenVec2 = Vector(eigenVal2 - s_y, c, 0);
       float angleRad = acos((eigenVec1 ^ Vector(0, 1, 0))/eigenVec1.length());
       angleDeg = angleRad * 180/PI;
@@ -262,7 +262,7 @@ void drawOpenGLScene() {
       glPushMatrix();
 
       glTranslatef(0, 0, -4);
-      if (c)
+      if (gauss.c)
          glRotatef(angleDeg, 0, 0, 1);
       glColor3f(1, 0, 0);
 

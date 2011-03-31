@@ -9,6 +9,7 @@
 #include <GL/glut.h>
 #include <stdio.h>
 #include <string>
+#include <fstream>
 #include <sstream>
 #include <math.h>
 #include "Vector3DMath.hpp"
@@ -33,20 +34,14 @@ unsigned int marked = PROJECTION;
 // --------------------------------------
 
 // gaussian kernel ----------------------
-/*
-float mu_x = 0.0;
-float mu_y = 0.0;
-float s_x = 1.0;
-float s_y = 1.0;
-float c = 0.0;
-*/
-
 struct gaussData {
    float mu_x, mu_y;
    float s_x, s_y, c;
 };
 
 gaussData gauss = {0, 0, 1, 1, 0};
+GLint splattingShader = 0;
+GLint gaussLoc = 0;
 // --------------------------------------
 
 // vbo ----------------------------------
@@ -60,6 +55,26 @@ enum {
 // misc ---------------------------------
 #define PI 3.14159265
 //---------------------------------------
+
+/*
+ * makes a char array from a given file
+ */
+char* readShaderFromFile(char* fileName) {
+   ifstream is;
+   char* buffer;
+
+   is.open(fileName);
+   // get length of file
+   is.seekg(0, ios::end);
+   int length = is.tellg();
+   is.seekg(0, ios::beg);
+
+   buffer = new char[length];
+   is.read(buffer, length);
+
+   is.close();
+   return buffer;
+}
 
 /*
  * Initializes the OpenGL parameters
@@ -77,10 +92,61 @@ void initOpenGL(int width, int height) {
 
    glMatrixMode(GL_MODELVIEW);
 
+   // compile and link the shader program
+   char* vertexSrc = readShaderFromFile("Splatting.vert");
+   char* fragSrc = readShaderFromFile("Splatting.frag");
+   int isCompiledVS, isCompiledFS, maxLength, isLinked;
+
+   splattingShader = glCreateProgram();
+   // compile the vertex shader
+   int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+   glShaderSource(vertexShader, 1, (const GLchar**)&vertexSrc, 0);
+   glCompileShader(vertexShader);
+   glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiledVS);
+   if (!isCompiledVS) {
+      glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+      char* vertexInfoLog = new char[maxLength];
+
+      glGetShaderInfoLog(vertexShader, maxLength, &maxLength, vertexInfoLog);
+      fprintf(stdout, vertexInfoLog);
+      delete[] vertexInfoLog;
+      return;
+   }
+
+   // compile the fragment shader
+   int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+   glShaderSource(fragShader, 1, (const GLchar**)&fragSrc, 0);
+   glCompileShader(fragShader);
+   glGetShaderiv(fragShader, GL_COMPILE_STATUS, &isCompiledFS);
+   if (!isCompiledFS) {
+      glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &maxLength);
+      char* fragInfoLog = new char[maxLength];
+
+      glGetShaderInfoLog(vertexShader, maxLength, &maxLength, fragInfoLog);
+      fprintf(stdout, fragInfoLog);
+      delete[] fragInfoLog;
+      return;
+   }
+
+   // attach and link the shaders to the program
+   glAttachShader(splattingShader, vertexShader);
+   glAttachShader(splattingShader, fragShader);
+
+   glLinkProgram(splattingShader);
+   glGetProgramiv(splattingShader, GL_LINK_STATUS, (int*)&isLinked);
+   if (!isLinked) {
+      glGetProgramiv(splattingShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+      char* splattingInfoLog = new char[maxLength];
+
+      glGetProgramInfoLog(splattingShader, maxLength, &maxLength, splattingInfoLog);
+      delete[] splattingInfoLog;
+      return;
+   }
+
    // generate buffer objects
    glGenBuffers(1, &gaussVBO);
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
-   //glBufferData(GL_ARRAY_BUFFER, 5*sizeof(float), pGaussian, GL_DYNAMIC_DRAW);
 }
 
 /*

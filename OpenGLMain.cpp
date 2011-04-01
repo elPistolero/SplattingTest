@@ -94,7 +94,8 @@ void initOpenGL(int width, int height) {
    // compile and link the shader program
    char* vertexSrc = readShaderFromFile("Splatting.vert");
    char* fragSrc = readShaderFromFile("Splatting.frag");
-   int isCompiledVS, isCompiledFS, maxLength, isLinked;
+   char* geomSrc = readShaderFromFile("Splatting.geom");
+   int isCompiledVS, isCompiledFS, isCompiledGEO, maxLength, isLinked;
 
    splattingShader = glCreateProgram();
    // compile the vertex shader
@@ -121,15 +122,31 @@ void initOpenGL(int width, int height) {
       glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &maxLength);
       char* fragInfoLog = new char[maxLength];
 
-      glGetShaderInfoLog(vertexShader, maxLength, &maxLength, fragInfoLog);
+      glGetShaderInfoLog(fragShader, maxLength, &maxLength, fragInfoLog);
       fprintf(stdout, fragInfoLog);
       delete[] fragInfoLog;
+      return;
+   }
+
+   // compile the geometry shader
+   int geoShader = glCreateShader(GL_GEOMETRY_SHADER);
+   glShaderSource(geoShader, 1, (const GLchar**)&geomSrc, 0);
+   glCompileShader(geoShader);
+   glGetShaderiv(geoShader, GL_COMPILE_STATUS, &isCompiledGEO);
+   if (!isCompiledGEO) {
+      glGetShaderiv(geoShader, GL_INFO_LOG_LENGTH, &maxLength);
+      char* geoInfoLog = new char[maxLength];
+
+      glGetShaderInfoLog(geoShader, maxLength, &maxLength, geoInfoLog);
+      fprintf(stdout, geoInfoLog);
+      delete[] geoInfoLog;
       return;
    }
 
    // attach and link the shaders to the program
    glAttachShader(splattingShader, vertexShader);
    glAttachShader(splattingShader, fragShader);
+   glAttachShader(splattingShader, geoShader);
 
    glLinkProgram(splattingShader);
    glGetProgramiv(splattingShader, GL_LINK_STATUS, (int*)&isLinked);
@@ -355,6 +372,7 @@ void drawOpenGLScene() {
    glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)(sizeof(GL_FLOAT)*2));
 
    //glDrawArrays(GL_POINTS, 0, 1);
+   //GLenum error = glGetError();
 
    glDisableVertexAttribArray(covLoc);
    glDisableVertexAttribArray(muLoc);

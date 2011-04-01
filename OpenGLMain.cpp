@@ -34,6 +34,7 @@ unsigned int marked = PROJECTION;
 // --------------------------------------
 
 // gaussian kernel ----------------------
+// ignore cache-friendly padding for now
 struct gaussData {
    float mu_x, mu_y;
    float s_x, s_y, c;
@@ -46,10 +47,8 @@ GLint gaussLoc = 0;
 
 // vbo ----------------------------------
 GLuint gaussVBO = 0;
-enum {
-   COVARIANCE,
-   MU
-};
+GLint muLoc = 0;
+GLint covLoc = 0;
 //---------------------------------------
 
 // misc ---------------------------------
@@ -144,9 +143,18 @@ void initOpenGL(int width, int height) {
       return;
    }
 
+   muLoc = glGetAttribLocation(splattingShader, "mu");
+   covLoc = glGetAttribLocation(splattingShader, "cov");
+
    // generate buffer objects
    glGenBuffers(1, &gaussVBO);
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
+   glEnableVertexAttribArray(muLoc);
+   glVertexAttribPointer(muLoc, 2, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)0);
+   glEnableVertexAttribArray(covLoc);
+   glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)(sizeof(GL_FLOAT)*2));
+   glDisableVertexAttribArray(covLoc);
+   glDisableVertexAttribArray(muLoc);
 }
 
 /*

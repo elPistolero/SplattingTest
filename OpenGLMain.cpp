@@ -149,12 +149,7 @@ void initOpenGL(int width, int height) {
    // generate buffer objects
    glGenBuffers(1, &gaussVBO);
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
-   glEnableVertexAttribArray(muLoc);
-   glVertexAttribPointer(muLoc, 2, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)0);
-   glEnableVertexAttribArray(covLoc);
-   glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)(sizeof(GL_FLOAT)*2));
-   glDisableVertexAttribArray(covLoc);
-   glDisableVertexAttribArray(muLoc);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(gaussData), &gauss, GL_DYNAMIC_DRAW);
 }
 
 /*
@@ -349,6 +344,23 @@ void drawOpenGLScene() {
 
       glPopMatrix();
    }
+
+   glUseProgram(splattingShader);
+
+   glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
+   glEnableVertexAttribArray(muLoc);
+   glEnableVertexAttribArray(covLoc);
+
+   glVertexAttribPointer(muLoc, 2, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)0);
+   glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)(sizeof(GL_FLOAT)*2));
+
+   //glDrawArrays(GL_POINTS, 0, 1);
+
+   glDisableVertexAttribArray(covLoc);
+   glDisableVertexAttribArray(muLoc);
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+   glUseProgram(0);
 
    drawMenu();
 

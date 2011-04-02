@@ -34,13 +34,15 @@ unsigned int marked = PROJECTION;
 // --------------------------------------
 
 // gaussian kernel ----------------------
-// ignore cache-friendly padding for now
-struct gaussData {
-   float mu_x, mu_y;
-   float s_x, s_y, c;
+enum {
+   MU_X,
+   MU_Y,
+   S_X,
+   S_Y,
+   R_C
 };
 
-gaussData gauss = {0, 0, 1, 1, 0};
+float gauss[] = {0, 0, 1, 1, 0};
 GLint splattingShader = 0;
 GLint gaussLoc = 0;
 // --------------------------------------
@@ -160,7 +162,7 @@ void initOpenGL(int width, int height) {
    // generate buffer objects
    glGenBuffers(1, &gaussVBO);
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(gaussData), &gauss, GL_DYNAMIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(gauss), &gauss, GL_DYNAMIC_DRAW);
 }
 
 /*
@@ -193,19 +195,19 @@ void specialKeyPressed (int key, int x, int y) {
    case GLUT_KEY_RIGHT:
       switch (marked) {
       case SX:
-         if (gauss.s_x >= -0.1 && gauss.s_x < 0) // make sure we don't divide by zero
-            gauss.s_x += 0.2;
+         if (gauss[S_X] >= -0.1 && gauss[S_X] < 0) // make sure we don't divide by zero
+            gauss[S_X] += 0.2;
          else
-            gauss.s_x += 0.1;
+            gauss[S_X] += 0.1;
          break;
       case SY:
-         if (gauss.s_y >= -0.1 && gauss.s_y < 0) // make sure we don't divide by zero
-            gauss.s_y += 0.2;
+         if (gauss[S_Y] >= -0.1 && gauss[S_Y] < 0) // make sure we don't divide by zero
+            gauss[S_Y] += 0.2;
          else
-            gauss.s_y += 0.1;
+            gauss[S_Y] += 0.1;
          break;
       case C:
-         gauss.c += 0.01;
+         gauss[R_C] += 0.01;
          break;
       default:
          if (menuStates[marked])
@@ -217,19 +219,19 @@ void specialKeyPressed (int key, int x, int y) {
    case GLUT_KEY_LEFT:
       switch (marked) {
       case SX:
-         if (gauss.s_x <= 0.1 && gauss.s_x > 0) // make sure we don't divide by zero
-            gauss.s_x -= 0.2;
+         if (gauss[S_X] <= 0.1 && gauss[S_X] > 0) // make sure we don't divide by zero
+            gauss[S_X] -= 0.2;
          else
-            gauss.s_x -= 0.1;
+            gauss[S_X] -= 0.1;
          break;
       case SY:
-         if (gauss.s_y <= 0.1 && gauss.s_y > 0) // make sure we don't divide by zero
-            gauss.s_y -= 0.2;
+         if (gauss[S_Y] <= 0.1 && gauss[S_Y] > 0) // make sure we don't divide by zero
+            gauss[S_Y] -= 0.2;
          else
-            gauss.s_y -= 0.1;
+            gauss[S_Y] -= 0.1;
          break;
       case C:
-         gauss.c -= 0.01;
+         gauss[R_C] -= 0.01;
          break;
       default:
          if (menuStates[marked])
@@ -305,9 +307,9 @@ void drawMenu() {
       drawString("Wireframe: Off", width-((width/100)*15), 50, font, marked == WIREFRAME);
 
       ostringstream x, y, cStr;
-      x << "s_x: " << gauss.s_x;
-      y << "s_y: " << gauss.s_y;
-      cStr << "c: " << gauss.c;
+      x << "s_x: " << gauss[S_X];
+      y << "s_y: " << gauss[S_Y];
+      cStr << "c: " << gauss[R_C];
       drawString(y.str(), width-((width/100)*15), 70, font, marked == SY);
       drawString(x.str(), width-((width/100)*15), 90, font, marked == SX);
       drawString(cStr.str(), width-((width/100)*15), 110, font, marked == C);
@@ -319,8 +321,8 @@ void drawOpenGLScene() {
    glLoadIdentity();
 
    // tempory calculation of bounding box (mu is 0,0)
-   float trace = gauss.s_x + gauss.s_y;
-   float det = gauss.s_x * gauss.s_y - pow(gauss.c, 2);
+   float trace = gauss[S_X] + gauss[S_Y];
+   float det = gauss[S_X] * gauss[S_Y] - pow(gauss[R_C], 2);
    float eigenVal1 = (trace + sqrt(pow(trace, 2) - 4 * det))/2;
    float eigenVal2 = (trace - sqrt(pow(trace, 2) - 4 * det))/2;
 
@@ -330,8 +332,8 @@ void drawOpenGLScene() {
 
    // orientation of the first eigenvector in relation to the x axis
    float angleDeg = 0;
-   if (gauss.c) {
-      Vector eigenVec1 = Vector(eigenVal1 - gauss.s_y, gauss.c, 0);
+   if (gauss[R_C]) {
+      Vector eigenVec1 = Vector(eigenVal1 - gauss[S_Y], gauss[R_C], 0);
       //Vector eigenVec2 = Vector(eigenVal2 - s_y, c, 0);
       float angleRad = acos((eigenVec1 ^ Vector(0, 1, 0))/eigenVec1.length());
       angleDeg = angleRad * 180/PI;
@@ -342,7 +344,7 @@ void drawOpenGLScene() {
       glPushMatrix();
 
       glTranslatef(0, 0, -4);
-      if (gauss.c)
+      if (gauss[R_C])
          glRotatef(angleDeg, 0, 0, 1);
       glColor3f(1, 0, 0);
 
@@ -362,8 +364,8 @@ void drawOpenGLScene() {
    glEnableVertexAttribArray(muLoc);
    glEnableVertexAttribArray(covLoc);
 
-   glVertexAttribPointer(muLoc, 2, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)0);
-   glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gaussData), (void*)(sizeof(GL_FLOAT)*2));
+   glVertexAttribPointer(muLoc, 2, GL_FLOAT, GL_FALSE, sizeof(gauss), (void*)0);
+   glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gauss), (void*)(sizeof(GL_FLOAT)*2));
 
    //glDrawArrays(GL_POINTS, 0, 1);
    //GLenum error = glGetError();

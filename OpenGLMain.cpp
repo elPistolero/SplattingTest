@@ -58,21 +58,12 @@ GLint covLoc = 0;
 /*
  * makes a char array from a given file
  */
-char* readShaderFromFile(char* fileName) {
-   ifstream is;
-   char* buffer;
-
-   is.open(fileName);
-   // get length of file
-   is.seekg(0, ios::end);
-   int length = is.tellg();
-   is.seekg(0, ios::beg);
-
-   buffer = new char[length];
-   is.read(buffer, length);
-
-   is.close();
-   return buffer;
+string readShaderFromFile(const string& fileName) {
+   string ret, line;
+   ifstream f(fileName.c_str());
+   while (getline(f, line))
+      ret += line + string("\n");
+   return ret;
 }
 
 /*
@@ -92,9 +83,12 @@ void initOpenGL(int width, int height) {
    glMatrixMode(GL_MODELVIEW);
 
    // compile and link the shader program
-   char* vertexSrc = readShaderFromFile("Splatting.vert");
-   char* fragSrc = readShaderFromFile("Splatting.frag");
-   char* geomSrc = readShaderFromFile("Splatting.geom");
+   string src = readShaderFromFile("Splatting.vert");
+   const char* vertexSrc = src.c_str();
+   src = readShaderFromFile("Splatting.frag");
+   const char* fragSrc = src.c_str();
+   src = readShaderFromFile("Splatting.geom");
+   const char* geomSrc = src.c_str();
    int isCompiledVS, isCompiledFS, isCompiledGEO, maxLength, isLinked;
 
    splattingShader = glCreateProgram();

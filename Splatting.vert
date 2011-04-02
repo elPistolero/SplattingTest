@@ -1,3 +1,5 @@
+#version 150
+
 attribute vec2 mu;
 attribute vec3 cov;
 

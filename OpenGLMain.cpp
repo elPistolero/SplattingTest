@@ -361,11 +361,12 @@ void drawOpenGLScene() {
          glRotatef(angleDeg, 0, 0, 1);
       glColor3f(1, 0, 0);
 
-      glBegin(GL_LINE_LOOP);
+      glBegin(GL_LINE_STRIP);
       glVertex3f(-lengthX, -lengthY, 0);
       glVertex3f(lengthX, -lengthY, 0);
       glVertex3f(lengthX, lengthY, 0);
       glVertex3f(-lengthX, lengthY, 0);
+      glVertex3f(-lengthX, -lengthY, 0);
       glEnd();
 
       glPopMatrix();

@@ -7,8 +7,9 @@
 
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <string>
+#include <string.h>
 #include <fstream>
 #include <sstream>
 #include <math.h>
@@ -60,12 +61,22 @@ GLint covLoc = 0;
 /*
  * makes a char array from a given file
  */
-string readShaderFromFile(const string& fileName) {
-   string ret, line;
-   ifstream f(fileName.c_str());
-   while (getline(f, line))
-      ret += line + string("\n");
-   return ret;
+char* readShaderFromFile(const string& fileName) {
+   ifstream temp(fileName.c_str());
+   int count = 0;
+   char* buf;
+
+   temp.seekg(0, ios::end);
+   count = temp.tellg();
+
+   buf = new char[count + 1];
+   memset(buf, 0, count);
+   temp.seekg(0, ios::beg);
+   temp.read(buf, count);
+   buf[count] = 0;
+   temp.close();
+
+   return buf;
 }
 
 /*
@@ -85,12 +96,9 @@ void initOpenGL(int width, int height) {
    glMatrixMode(GL_MODELVIEW);
 
    // compile and link the shader program
-   string src = readShaderFromFile("Splatting.vert");
-   const char* vertexSrc = src.c_str();
-   src = readShaderFromFile("Splatting.frag");
-   const char* fragSrc = src.c_str();
-   src = readShaderFromFile("Splatting.geom");
-   const char* geomSrc = src.c_str();
+   const char* vertexSrc = readShaderFromFile("Splatting.vert");
+   const char* geomSrc = readShaderFromFile("Splatting.geom");
+   const char* fragSrc = readShaderFromFile("Splatting.frag");
    int isCompiledVS, isCompiledFS, isCompiledGEO, maxLength, isLinked;
 
    splattingShader = glCreateProgram();
@@ -104,23 +112,9 @@ void initOpenGL(int width, int height) {
       char* vertexInfoLog = new char[maxLength];
 
       glGetShaderInfoLog(vertexShader, maxLength, &maxLength, vertexInfoLog);
+      fprintf(stdout, "vertex shader: compile error: ");
       fprintf(stdout, vertexInfoLog);
       delete[] vertexInfoLog;
-      return;
-   }
-
-   // compile the fragment shader
-   int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-   glShaderSource(fragShader, 1, (const GLchar**)&fragSrc, 0);
-   glCompileShader(fragShader);
-   glGetShaderiv(fragShader, GL_COMPILE_STATUS, &isCompiledFS);
-   if (!isCompiledFS) {
-      glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &maxLength);
-      char* fragInfoLog = new char[maxLength];
-
-      glGetShaderInfoLog(fragShader, maxLength, &maxLength, fragInfoLog);
-      fprintf(stdout, fragInfoLog);
-      delete[] fragInfoLog;
       return;
    }
 
@@ -134,15 +128,32 @@ void initOpenGL(int width, int height) {
       char* geoInfoLog = new char[maxLength];
 
       glGetShaderInfoLog(geoShader, maxLength, &maxLength, geoInfoLog);
+      fprintf(stdout, "geometry shader: compile error: ");
       fprintf(stdout, geoInfoLog);
       delete[] geoInfoLog;
       return;
    }
 
+   // compile the fragment shader
+   int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+   glShaderSource(fragShader, 1, (const GLchar**)&fragSrc, 0);
+   glCompileShader(fragShader);
+   glGetShaderiv(fragShader, GL_COMPILE_STATUS, &isCompiledFS);
+   if (!isCompiledFS) {
+      glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &maxLength);
+      char* fragInfoLog = new char[maxLength];
+
+      glGetShaderInfoLog(fragShader, maxLength, &maxLength, fragInfoLog);
+      fprintf(stdout, "fragment shader: compile error: ");
+      fprintf(stdout, fragInfoLog);
+      delete[] fragInfoLog;
+      return;
+   }
+
    // attach and link the shaders to the program
    glAttachShader(splattingShader, vertexShader);
-   glAttachShader(splattingShader, fragShader);
    glAttachShader(splattingShader, geoShader);
+   glAttachShader(splattingShader, fragShader);
 
    glLinkProgram(splattingShader);
    glGetProgramiv(splattingShader, GL_LINK_STATUS, (int*)&isLinked);
@@ -152,6 +163,8 @@ void initOpenGL(int width, int height) {
       char* splattingInfoLog = new char[maxLength];
 
       glGetProgramInfoLog(splattingShader, maxLength, &maxLength, splattingInfoLog);
+      fprintf(stdout, "shader: link error: ");
+      fprintf(stdout, splattingInfoLog);
       delete[] splattingInfoLog;
       return;
    }
@@ -367,7 +380,7 @@ void drawOpenGLScene() {
    glVertexAttribPointer(muLoc, 2, GL_FLOAT, GL_FALSE, sizeof(gauss), (void*)0);
    glVertexAttribPointer(covLoc, 3, GL_FLOAT, GL_FALSE, sizeof(gauss), (void*)(sizeof(GL_FLOAT)*2));
 
-   //glDrawArrays(GL_POINTS, 0, 1);
+   glDrawArrays(GL_POINTS, 0, 1);
    //GLenum error = glGetError();
 
    glDisableVertexAttribArray(covLoc);

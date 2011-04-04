@@ -52,6 +52,8 @@ GLint gaussLoc = 0;
 GLuint gaussVBO = 0;
 GLint muLoc = 0;
 GLint covLoc = 0;
+GLint projectionLoc = 0;
+GLint modelViewLoc = 0;
 //---------------------------------------
 
 // misc ---------------------------------
@@ -171,6 +173,15 @@ void initOpenGL(int width, int height) {
 
    muLoc = glGetAttribLocation(splattingShader, "mu");
    covLoc = glGetAttribLocation(splattingShader, "cov");
+   projectionLoc = glGetUniformLocation(splattingShader, "projectionMatrix");
+   modelViewLoc = glGetUniformLocation(splattingShader, "modelViewMatrix");
+
+   // passes the projection matrix to the shader
+   GLfloat pProj[16];
+   glGetFloatv(GL_PROJECTION_MATRIX, pProj);
+   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, pProj);
+
+
 
    // generate buffer objects
    glGenBuffers(1, &gaussVBO);
@@ -332,7 +343,16 @@ void drawMenu() {
 void drawOpenGLScene() {
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
    glLoadIdentity();
+   gluLookAt(  0, 0, 5,
+               0, 0, -1,
+               0, 1, 0);
 
+   // passes the modelview matrix to the shader
+   GLfloat pModView[16];
+   glGetFloatv(GL_MODELVIEW, pModView);
+   glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, pModView);
+
+   /*
    // tempory calculation of bounding box (mu is 0,0)
    float trace = gauss[S_X] + gauss[S_Y];
    float det = gauss[S_X] * gauss[S_Y] - pow(gauss[R_C], 2);
@@ -356,7 +376,6 @@ void drawOpenGLScene() {
    if (menuStates[WIREFRAME]) {
       glPushMatrix();
 
-      glTranslatef(0, 0, -4);
       if (gauss[R_C])
          glRotatef(angleDeg, 0, 0, 1);
       glColor3f(1, 0, 0);
@@ -371,6 +390,7 @@ void drawOpenGLScene() {
 
       glPopMatrix();
    }
+   */
 
    glUseProgram(splattingShader);
 

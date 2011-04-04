@@ -1,8 +1,11 @@
 #version 330
+uniform mat4 projectionMatrix;
+uniform mat4 modelViewMatrix;
+
 layout(points) in;
-layout(line_strip, max_vertices = 5) out;
-in vec2 geoMu[];
 in vec3 geoCov[];
+
+layout(line_strip, max_vertices = 5) out;
 
 void main() {
     //gl_Position = vec4(0, 0, 0, 0);
@@ -25,15 +28,17 @@ void main() {
         angleDeg = degrees(angleRad);
     }
     
-    gl_Position = vec4(geoMu[0].x, geoMu[0].y, -4, 0) + vec4(-lengthX, -lengthY, 0, 0);
+    mat4 modelViewProjection = projectionMatrix * modelViewMatrix;
+    
+    gl_Position = modelViewProjection * (gl_in[0].gl_Position + vec4(-lengthX, -lengthY, 0, 0));
     EmitVertex();
-    gl_Position = vec4(geoMu[0].x, geoMu[0].y, -4, 0) + vec4(lengthX, -lengthY, 0, 0);
+    gl_Position = modelViewProjection * (gl_in[0].gl_Position + vec4(lengthX, -lengthY, 0, 0));
     EmitVertex();
-    gl_Position = vec4(geoMu[0].x, geoMu[0].y, -4, 0) + vec4(lengthX, lengthY, 0, 0);
+    gl_Position = modelViewProjection * (gl_in[0].gl_Position + vec4(lengthX, lengthY, 0, 0));
     EmitVertex();
-    gl_Position = vec4(geoMu[0].x, geoMu[0].y, -4, 0) + vec4(-lengthX, lengthY, 0, 0);
+    gl_Position = modelViewProjection * (gl_in[0].gl_Position + vec4(-lengthX, lengthY, 0, 0));
     EmitVertex();
-    gl_Position = vec4(geoMu[0].x, geoMu[0].y, -4, 0) + vec4(-lengthX, -lengthY, 0, 0);
+    gl_Position = modelViewProjection * (gl_in[0].gl_Position + vec4(-lengthX, -lengthY, 0, 0));
     EmitVertex();
     
     EndPrimitive();

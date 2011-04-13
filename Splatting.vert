@@ -7,4 +7,5 @@ in vec3 vVertex;
 
 void main () {
     gl_Position = gl_ModelViewProjectionMatrix * vec4(vVertex, 1);
+    gl_PointSize = 8;
 }

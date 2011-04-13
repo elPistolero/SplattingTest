@@ -32,7 +32,7 @@ enum {
    C
 };
 #define MENU_SIZE 5;
-bool menuStates[] = {false, true, false, false, false};
+bool menuStates[] = {true, true, false, false, false};
 unsigned int marked = PROJECTION;
 // --------------------------------------
 
@@ -183,7 +183,7 @@ void initOpenGL(int width, int height) {
    setupVAO();
 
    glEnable(GL_DEPTH_TEST);
-   glPointSize(50);
+   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
@@ -386,6 +386,20 @@ void drawGrid() {
 }
 
 void drawOpenGLScene() {
+   if (menuStates[PROJECTION]) {
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      gluPerspective(45.0f, (GLdouble)WIDTH/(GLdouble)HEIGHT, 1, 1000.0f);
+
+      glMatrixMode(GL_MODELVIEW);
+   } else {
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(0.0, glutGet(GLUT_WINDOW_WIDTH), 0.0, glutGet(GLUT_WINDOW_HEIGHT), 1.0, 1000.0);
+
+      glMatrixMode(GL_MODELVIEW);
+   }
+
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
    glLoadIdentity();
    gluLookAt(camera[0], camera[1], camera[2],

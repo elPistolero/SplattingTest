@@ -1,15 +1,10 @@
-#version 330
+#version 130
 
-uniform mat4 projectionMatrix;
-uniform mat4 modelViewMatrix;
+uniform mat2 cov;
+uniform vec2 mu;
 
-in vec2 mu;
-in vec3 cov;
-
-out vec3 geoCov;
+in vec3 vVertex;
 
 void main () {
-    //gl_Position = projectionMatrix * modelViewMatrix * vec4(mu, 0, 1);
-    gl_Position = vec4(mu, 0, 1);
-    geoCov = cov;
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(vVertex, 1);
 }

@@ -14,5 +14,5 @@ void main () {
      //   discard;
         
     //gl_FragColor = mix(vec4(.9, .9, .9, 1), vec4(.2, .2, .4, 1), smoothstep(380.25, 420.25, dist_squared));
-    frag_color = vec4(1, 1, 1, 1);
+    frag_color = vec4(1, 0, 0, 1);
 }

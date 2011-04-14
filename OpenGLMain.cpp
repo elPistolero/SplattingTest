@@ -25,14 +25,10 @@ int timebase = 0;
 int currenttime = 0;
 string strFPS;
 enum {
-   PROJECTION,
-   WIREFRAME,
-   SY,
-   SX,
-   C
+   PROJECTION, WIREFRAME
 };
-#define MENU_SIZE 5;
-bool menuStates[] = {true, true, false, false, false};
+#define MENU_SIZE 2;
+bool menuStates[] = { true, true};
 unsigned int marked = PROJECTION;
 
 // shader  ----------------------
@@ -45,36 +41,35 @@ GLuint quadVBO = 0;
 GLuint quadVAO = 0;
 GLint quadLoc = 0;
 GLint muLoc = 0;
-GLint covLoc = 0;
-GLint gaussLoc = 0;
+GLint sLoc = 0;
+GLint cLoc = 0;
+GLint weightLoc = 0;
 
-enum {
-   MU_X,
-   MU_Y,
-   S_X,
-   S_Y,
-   R_C
-};
-
-float gauss[] = {400, 300, 1, 1, 0};
-GLfloat mu[] = {gauss[MU_X], gauss[MU_Y]};
-GLfloat cov[] = {gauss[S_X], gauss[R_C], gauss[R_C], gauss[S_Y]};
 const int quadTOTAL = 4;
-GLfloat quad[quadTOTAL*2] =
-{-1, 1,
-  1, 1,
-  1, -1,
- -1, -1
-};
-GLsizei quadStride = sizeof(GLfloat)*2;
+GLfloat quad[quadTOTAL * 2] = { -1, 1, 1, 1, 1, -1, -1, -1 };
+GLsizei quadStride = sizeof(GLfloat) * 2;
+
+GLfloat s_x = 1;
+GLfloat s_y = 1;
+GLfloat s_z = 1;
+GLfloat c_1 = 0;
+GLfloat c_2 = 0;
+GLfloat c_3 = 0;
+GLfloat mu_x = 0;
+GLfloat mu_y = 0;
+GLfloat mu_z = -1;
+GLfloat weight = 1;
+
+
+GLfloat gauss[10] = {s_x, s_y, s_z, c_1, c_2, c_3, mu_x, mu_y, mu_z, weight};
 
 // camera coords ------------------------
-GLfloat camera[3] = {0, 1, 5};
+GLfloat camera[3] = { 0, 1, 5 };
 GLfloat rotAngle = 0;
 
-
 // misc ---------------------------------
-const float PI =  3.14159265;
+const float PI = 3.14159265;
+#define BUFFER_OFFSET(i) ((char*)NULL + (i))
 
 /*
  * makes a char array from a given file
@@ -156,6 +151,10 @@ void setupShaders() {
    }
 
    quadLoc = glGetAttribLocation(splattingShader, "quadVert");
+   sLoc = glGetAttribLocation(splattingShader, "s");
+   cLoc = glGetAttribLocation(splattingShader, "c");
+   muLoc = glGetAttribLocation(splattingShader, "mu");
+   weightLoc = glGetAttribLocation(splattingShader, "weight");
 }
 
 void setupVAO() {
@@ -163,11 +162,27 @@ void setupVAO() {
    glGenBuffers(1, &quadVBO);
 
    glBindVertexArray(quadVAO);
-   	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-   	glBufferData(GL_ARRAY_BUFFER, sizeof(quad), &quad[0], GL_DYNAMIC_DRAW);
-   	glEnableVertexAttribArray(quadLoc);
-   	glVertexAttribPointer(quadLoc, 2, GL_FLOAT, GL_FALSE, quadStride, 0);
-	glBindVertexArray(0);
+   glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(quad), &quad[0], GL_DYNAMIC_DRAW);
+   glEnableVertexAttribArray(quadLoc);
+   glVertexAttribPointer(quadLoc, 2, GL_FLOAT, GL_FALSE, quadStride, 0);
+   glBindVertexArray(0);
+
+   glGenVertexArrays(1, &gaussVAO);
+   glGenBuffers(1, &gaussVBO);
+
+   glBindVertexArray(gaussVAO);
+   glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(gauss), &gauss[0], GL_DYNAMIC_DRAW);
+   glEnableVertexAttribArray(sLoc);
+   glVertexAttribPointer(sLoc, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), BUFFER_OFFSET(0));
+   glEnableVertexAttribArray(cLoc);
+   glVertexAttribPointer(cLoc, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), BUFFER_OFFSET(3*sizeof(GL_FLOAT)));
+   glEnableVertexAttribArray(muLoc);
+   glVertexAttribPointer(muLoc, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), BUFFER_OFFSET(6*sizeof(GL_FLOAT)));
+   glEnableVertexAttribArray(weightLoc);
+   glVertexAttribPointer(weightLoc, 1, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), BUFFER_OFFSET(9*sizeof(GL_FLOAT)));
+   glBindVertexArray(0);
 }
 
 /*
@@ -185,7 +200,7 @@ void initOpenGL(int width, int height) {
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
 
-   gluPerspective(45.0f, (GLdouble)width/(GLdouble)height, 1, 1000.0f);
+   gluPerspective(45.0f, (GLdouble) width / (GLdouble) height, 1, 1000.0f);
 
    glMatrixMode(GL_MODELVIEW);
 }
@@ -201,15 +216,15 @@ void resizeOpenGLScene(int width, int height) {
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(45.0f, (GLdouble)width/(GLdouble)height, 1, 1000.0f);
+   gluPerspective(45.0f, (GLdouble) width / (GLdouble) height, 1, 1000.0f);
 
    glMatrixMode(GL_MODELVIEW);
 }
 
 void keyPressed(unsigned char key, int x, int y) {
-	if (key == 27) {
-		exit(0);
-	} else if (key == 'q') {
+   if (key == 27) {
+      exit(0);
+   } else if (key == 'q') {
       rotAngle -= 5;
    } else if (key == 'e') {
       rotAngle += 5;
@@ -231,7 +246,7 @@ void keyPressed(unsigned char key, int x, int y) {
 /*
  * handles special key-pressed events
  */
-void specialKeyPressed (int key, int x, int y) {
+void specialKeyPressed(int key, int x, int y) {
    switch (key) {
    case GLUT_KEY_UP:
       marked = (marked + 1) % MENU_SIZE;
@@ -240,52 +255,16 @@ void specialKeyPressed (int key, int x, int y) {
       marked = (marked - 1) % MENU_SIZE;
       break;
    case GLUT_KEY_RIGHT:
-      switch (marked) {
-      case SX:
-         if (gauss[S_X] >= -0.1 && gauss[S_X] < 0) // make sure we don't divide by zero
-            gauss[S_X] += 0.2;
-         else
-            gauss[S_X] += 0.1;
-         break;
-      case SY:
-         if (gauss[S_Y] >= -0.1 && gauss[S_Y] < 0) // make sure we don't divide by zero
-            gauss[S_Y] += 0.2;
-         else
-            gauss[S_Y] += 0.1;
-         break;
-      case C:
-         gauss[R_C] += 0.01;
-         break;
-      default:
-         if (menuStates[marked])
-            menuStates[marked] = false;
-         else
-            menuStates[marked] = true;
-      }
+      if (menuStates[marked])
+         menuStates[marked] = false;
+      else
+         menuStates[marked] = true;
       break;
    case GLUT_KEY_LEFT:
-      switch (marked) {
-      case SX:
-         if (gauss[S_X] <= 0.1 && gauss[S_X] > 0) // make sure we don't divide by zero
-            gauss[S_X] -= 0.2;
-         else
-            gauss[S_X] -= 0.1;
-         break;
-      case SY:
-         if (gauss[S_Y] <= 0.1 && gauss[S_Y] > 0) // make sure we don't divide by zero
-            gauss[S_Y] -= 0.2;
-         else
-            gauss[S_Y] -= 0.1;
-         break;
-      case C:
-         gauss[R_C] -= 0.01;
-         break;
-      default:
-         if (menuStates[marked])
-            menuStates[marked] = false;
-         else
-            menuStates[marked] = true;
-      }
+      if (menuStates[marked])
+         menuStates[marked] = false;
+      else
+         menuStates[marked] = true;
       break;
    }
 }
@@ -297,7 +276,8 @@ void drawString(string str, float x, float y, void* font, bool marked) {
    glMatrixMode(GL_PROJECTION);
    glPushMatrix();
    glLoadIdentity();
-   glOrtho(0.0, glutGet(GLUT_WINDOW_WIDTH), 0.0, glutGet(GLUT_WINDOW_HEIGHT), -1.0, 1.0);
+   glOrtho(0.0, glutGet(GLUT_WINDOW_WIDTH), 0.0, glutGet(GLUT_WINDOW_HEIGHT),
+         -1.0, 1.0);
 
    glMatrixMode(GL_MODELVIEW);
    glPushMatrix();
@@ -330,9 +310,9 @@ void drawMenu() {
 
    // check if a second has passed
    if (currenttime - timebase > 1000) {
-      float fps = frame*1000.0/(currenttime - timebase);
+      float fps = frame * 1000.0 / (currenttime - timebase);
       ostringstream o;
-      o << "FPS: " << (long)fps;
+      o << "FPS: " << (long) fps;
       strFPS = o.str();
 
       timebase = currenttime;
@@ -340,27 +320,22 @@ void drawMenu() {
    }
 
    int width = glutGet(GLUT_WINDOW_WIDTH);
-   drawString(strFPS, width-((width/100)*15), 10, font, false);
+   drawString(strFPS, width - ((width / 100) * 15), 10, font, false);
 
    // draw the menu
-   if (menuStates[PROJECTION])   //
-      drawString("Projection: Perspective", width-((width/100)*15), 30, font, marked == PROJECTION);
+   if (menuStates[PROJECTION]) //
+      drawString("Projection: Perspective", width - ((width / 100) * 15), 30,
+            font, marked == PROJECTION);
    else
-      drawString("Projection: Orthogonal", width-((width/100)*15), 30, font, marked == PROJECTION);
+      drawString("Projection: Orthogonal", width - ((width / 100) * 15), 30,
+            font, marked == PROJECTION);
 
    if (menuStates[WIREFRAME])
-      drawString("Wireframe: On", width-((width/100)*15), 50, font, marked == WIREFRAME);
+      drawString("Wireframe: On", width - ((width / 100) * 15), 50, font,
+            marked == WIREFRAME);
    else
-      drawString("Wireframe: Off", width-((width/100)*15), 50, font, marked == WIREFRAME);
-
-      ostringstream x, y, cStr;
-      x << "s_x: " << gauss[S_X];
-      y << "s_y: " << gauss[S_Y];
-      cStr << "c: " << gauss[R_C];
-      drawString(y.str(), width-((width/100)*15), 70, font, marked == SY);
-      drawString(x.str(), width-((width/100)*15), 90, font, marked == SX);
-      drawString(cStr.str(), width-((width/100)*15), 110, font, marked == C);
-
+      drawString("Wireframe: Off", width - ((width / 100) * 15), 50, font,
+            marked == WIREFRAME);
 }
 
 void drawGrid() {
@@ -388,14 +363,12 @@ void drawOpenGLScene() {
    if (menuStates[PROJECTION]) {
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      gluPerspective(45.0f, (GLdouble)WIDTH/(GLdouble)HEIGHT, 1, 1000.0f);
+      gluPerspective(45.0f, (GLdouble) WIDTH / (GLdouble) HEIGHT, 1, 1000.0f);
 
       glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		gluLookAt(camera[0], camera[1], camera[2],
-             0, 0, -1,
-             0, 1, 0);
-		glRotatef(rotAngle, 0, 1, 0);
+      glLoadIdentity();
+      gluLookAt(camera[0], camera[1], camera[2], 0, 0, -1, 0, 1, 0);
+      glRotatef(rotAngle, 0, 1, 0);
    } else {
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
@@ -405,15 +378,15 @@ void drawOpenGLScene() {
       glLoadIdentity();
    }
 
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
    if (menuStates[WIREFRAME])
       drawGrid();
 
    glUseProgram(splattingShader);
-   	glBindVertexArray(quadVAO);
-   		glDrawArrays(GL_QUADS, 0, quadTOTAL);
-		glBindVertexArray(0);
+   glBindVertexArray(quadVAO);
+   glDrawArrays(GL_QUADS, 0, quadTOTAL);
+   glBindVertexArray(0);
    glUseProgram(0);
 
    drawMenu();

@@ -210,7 +210,9 @@ void resizeOpenGLScene(int width, int height) {
 }
 
 void keyPressed(unsigned char key, int x, int y) {
-   if (key == 'q') {
+	if (key == 27) {
+		exit(0);
+	} else if (key == 'q') {
       rotAngle -= 5;
    } else if (key == 'e') {
       rotAngle += 5;
@@ -392,20 +394,21 @@ void drawOpenGLScene() {
       gluPerspective(45.0f, (GLdouble)WIDTH/(GLdouble)HEIGHT, 1, 1000.0f);
 
       glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		gluLookAt(camera[0], camera[1], camera[2],
+             0, 0, -1,
+             0, 1, 0);
+		glRotatef(rotAngle, 0, 1, 0);
    } else {
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      glOrtho(0.0, glutGet(GLUT_WINDOW_WIDTH), 0.0, glutGet(GLUT_WINDOW_HEIGHT), 1.0, 1000.0);
+      glOrtho(-10, 10, -10, 10, 1.0, 1000.0);
 
       glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
    }
 
-   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-   glLoadIdentity();
-   gluLookAt(camera[0], camera[1], camera[2],
-             0, 0, -1,
-             0, 1, 0);
-   glRotatef(rotAngle, 0, 1, 0);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
    if (menuStates[WIREFRAME])
       drawGrid();

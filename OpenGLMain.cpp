@@ -34,9 +34,20 @@ enum {
 #define MENU_SIZE 5;
 bool menuStates[] = {true, true, false, false, false};
 unsigned int marked = PROJECTION;
-// --------------------------------------
 
-// gaussian kernel ----------------------
+// shader  ----------------------
+GLint splattingShader = 0;
+
+// vbos ----------------------------------
+GLuint gaussVBO = 0;
+GLuint gaussVAO = 0;
+GLuint quadVBO = 0;
+GLuint quadVAO = 0;
+GLint quadLoc = 0;
+GLint muLoc = 0;
+GLint covLoc = 0;
+GLint gaussLoc = 0;
+
 enum {
    MU_X,
    MU_Y,
@@ -48,36 +59,22 @@ enum {
 float gauss[] = {400, 300, 1, 1, 0};
 GLfloat mu[] = {gauss[MU_X], gauss[MU_Y]};
 GLfloat cov[] = {gauss[S_X], gauss[R_C], gauss[R_C], gauss[S_Y]};
-GLint splattingShader = 0;
-GLint gaussLoc = 0;
-// --------------------------------------
-
-// vbo ----------------------------------
-GLuint gaussVBO = 0;
-GLint muLoc = 0;
-GLint covLoc = 0;
-//---------------------------------------
-
-// misc ---------------------------------
-#define PI 3.14159265
-//---------------------------------------
-
-// point test ---------------------------
-const int TOTAL = 9;
-GLfloat positions[3*TOTAL] =
-{-1, 0, -1, 0, 0, -1, 1, 0, -1,
- -1, 0, 0, 0, 0, 0, 1, 0, 0,
- -1, 0, 1, 0, 0, 1, 1, 0, 1};
-GLuint vboID, vaoID;
-GLsizei stride = sizeof(GLfloat)*3;
-GLint vertexLoc = 0;
-//---------------------------------------
+const int quadTOTAL = 4;
+GLfloat quad[quadTOTAL*2] =
+{-1, 1,
+  1, 1,
+  1, -1,
+ -1, -1
+};
+GLsizei quadStride = sizeof(GLfloat)*2;
 
 // camera coords ------------------------
 GLfloat camera[3] = {0, 1, 5};
 GLfloat rotAngle = 0;
 
-//---------------------------------------
+
+// misc ---------------------------------
+const float PI =  3.14159265;
 
 /*
  * makes a char array from a given file
@@ -158,19 +155,19 @@ void setupShaders() {
       return;
    }
 
-   vertexLoc = glGetAttribLocation(splattingShader, "vVertex");
+   quadLoc = glGetAttribLocation(splattingShader, "quadVert");
 }
 
 void setupVAO() {
-   glGenVertexArrays(1, &vaoID);
-   glGenBuffers(1, &vboID);
+   glGenVertexArrays(1, &quadVAO);
+   glGenBuffers(1, &quadVBO);
 
-   glBindVertexArray(vaoID);
-      glBindBuffer(GL_ARRAY_BUFFER, vboID);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(positions), &positions[0], GL_STATIC_DRAW);
-      glEnableVertexAttribArray(vertexLoc);
-      glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, GL_FALSE, stride, 0);
-   glBindVertexArray(0);
+   glBindVertexArray(quadVAO);
+   	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+   	glBufferData(GL_ARRAY_BUFFER, sizeof(quad), &quad[0], GL_DYNAMIC_DRAW);
+   	glEnableVertexAttribArray(quadLoc);
+   	glVertexAttribPointer(quadLoc, 2, GL_FLOAT, GL_FALSE, quadStride, 0);
+	glBindVertexArray(0);
 }
 
 /*
@@ -414,9 +411,9 @@ void drawOpenGLScene() {
       drawGrid();
 
    glUseProgram(splattingShader);
-      glBindVertexArray(vaoID);
-         glDrawArrays(GL_POINTS, 0, TOTAL);
-      glBindVertexArray(0);
+   	glBindVertexArray(quadVAO);
+   		glDrawArrays(GL_QUADS, 0, quadTOTAL);
+		glBindVertexArray(0);
    glUseProgram(0);
 
    drawMenu();

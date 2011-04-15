@@ -109,8 +109,8 @@ void setupShaders() {
       char* vertexInfoLog = new char[maxLength];
 
       glGetShaderInfoLog(vertexShader, maxLength, &maxLength, vertexInfoLog);
-      fprintf(stdout, "vertex shader: compile error: ");
-      fprintf(stdout, vertexInfoLog);
+      printf("vertex shader: compile error: ");
+      printf("%s", vertexInfoLog);
       delete[] vertexInfoLog;
       return;
    }
@@ -125,8 +125,8 @@ void setupShaders() {
       char* fragInfoLog = new char[maxLength];
 
       glGetShaderInfoLog(fragShader, maxLength, &maxLength, fragInfoLog);
-      fprintf(stdout, "fragment shader: compile error: ");
-      fprintf(stdout, fragInfoLog);
+      printf("fragment shader: compile error: ");
+      printf("%s", fragInfoLog);
       delete[] fragInfoLog;
       return;
    }
@@ -145,7 +145,7 @@ void setupShaders() {
       glGetProgramInfoLog(splattingShader, maxLength, &maxLength,
             splattingInfoLog);
       fprintf(stdout, "shader: link error: ");
-      fprintf(stdout, splattingInfoLog);
+      printf("%s", splattingInfoLog);
       delete[] splattingInfoLog;
       return;
    }

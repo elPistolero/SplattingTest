@@ -8,7 +8,7 @@ in float weight;
 
 void main () {
     //gl_Position = gl_ModelViewProjectionMatrix * vec4(vVertex, 1);
-    if (s.x == 1) {
+    if (weight == 1) {
         gl_Position = gl_ModelViewProjectionMatrix * vec4(quadVert, -1, 1);
     } else {
         gl_Position = vec4(0, 0, 0, 0);

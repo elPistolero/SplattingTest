@@ -54,7 +54,7 @@ GLfloat mu_z = -1;
 GLfloat weight = 1;
 
 struct GaussVertex {
-   float x, y;
+   float x, y, id;
    float s_x, s_y, s_z;
    float c_1, c_2, c_3;
    float mu_x, mu_y, mu_z;
@@ -168,6 +168,7 @@ void setupVBO() {
    pGauss[3].x = -1;
    pGauss[3].y = -1;
    for (int i = 0; i < 4; i++) {
+      pGauss[i].id = i;
       pGauss[i].s_x = s_x;
       pGauss[i].s_y = s_y;
       pGauss[i].s_z = s_z;
@@ -185,15 +186,15 @@ void setupVBO() {
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
    glBufferData(GL_ARRAY_BUFFER, sizeof(GaussVertex)*4, &pGauss[0].x, GL_DYNAMIC_DRAW);
    glEnableVertexAttribArray(quadLoc);
-   glVertexAttribPointer(quadLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(0));
+   glVertexAttribPointer(quadLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(0));
    glEnableVertexAttribArray(sLoc);
-   glVertexAttribPointer(sLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(2*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(sLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(3*sizeof(GL_FLOAT)));
    glEnableVertexAttribArray(cLoc);
-   glVertexAttribPointer(cLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(5*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(cLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(6*sizeof(GL_FLOAT)));
    glEnableVertexAttribArray(muLoc);
-   glVertexAttribPointer(muLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(8*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(muLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(9*sizeof(GL_FLOAT)));
    glEnableVertexAttribArray(weightLoc);
-   glVertexAttribPointer(weightLoc, 1, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(11*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(weightLoc, 1, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(12*sizeof(GL_FLOAT)));
 }
 
 /*
@@ -402,11 +403,11 @@ void drawOpenGLScene() {
    glEnableVertexAttribArray(cLoc);
    glEnableVertexAttribArray(muLoc);
    glEnableVertexAttribArray(weightLoc);
-   glVertexAttribPointer(quadLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(0));
-   glVertexAttribPointer(sLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(2*sizeof(GL_FLOAT)));
-   glVertexAttribPointer(cLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(5*sizeof(GL_FLOAT)));
-   glVertexAttribPointer(muLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(8*sizeof(GL_FLOAT)));
-   glVertexAttribPointer(weightLoc, 1, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(11*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(quadLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(0));
+   glVertexAttribPointer(sLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(3*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(cLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(6*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(muLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(9*sizeof(GL_FLOAT)));
+   glVertexAttribPointer(weightLoc, 1, GL_FLOAT, GL_FALSE, sizeof(GaussVertex), BUFFER_OFFSET(12*sizeof(GL_FLOAT)));
 
    glDrawArrays(GL_QUADS, 0, 4);
 

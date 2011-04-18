@@ -269,24 +269,34 @@ void specialKeyPressed(int key, int x, int y) {
       switch (marked) {
       case MU_X:
          mu_x++;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].mu_x = mu_x;
          break;
       case MU_Y:
          mu_y++;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].mu_y = mu_y;
          break;
       case S_X:
          if (s_x >= -0.1 && s_x < 0) // make sure we don't divide by zero
             s_x += 0.2;
          else
             s_x += 0.1;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].s_x = s_x;
          break;
       case S_Y:
          if (s_y >= -0.1 && s_y < 0) // make sure we don't divide by zero
             s_y += 0.2;
          else
             s_y += 0.1;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].s_y = s_y;
          break;
       case C:
          c_1 += 0.01;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].c_1 = c_1;
          break;
       default:
          if (menuStates[marked])
@@ -300,24 +310,34 @@ void specialKeyPressed(int key, int x, int y) {
       switch (marked) {
       case MU_X:
          mu_x--;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].mu_x = mu_x;
          break;
       case MU_Y:
          mu_y--;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].mu_y = mu_y;
          break;
       case S_X:
          if (s_x <= 0.1 && s_x > 0) // make sure we don't divide by zero
             s_x -= 0.2;
          else
             s_x -= 0.1;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].s_x = s_x;
          break;
       case S_Y:
          if (s_y <= -0.1 && s_y > 0) // make sure we don't divide by zero
             s_y -= 0.2;
          else
             s_y -= 0.1;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].s_y = s_y;
          break;
       case C:
          c_1 -= 0.01;
+         for (int i = 0; i < 4; i++)
+            pGauss[i].c_1 = c_1;
          break;
       default:
          if (menuStates[marked])
@@ -458,6 +478,7 @@ void drawOpenGLScene() {
    glUseProgram(splattingShader);
 
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
+   glBufferData(GL_ARRAY_BUFFER, sizeof(GaussVertex)*4, &pGauss[0].x, GL_DYNAMIC_DRAW); // is this efficient?
    glEnableVertexAttribArray(quadLoc);
    glEnableVertexAttribArray(sLoc);
    glEnableVertexAttribArray(cLoc);

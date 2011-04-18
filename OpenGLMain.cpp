@@ -158,15 +158,14 @@ void setupShaders() {
 }
 
 void setupVBO() {
-//GLfloat quad[quadTOTAL * 2] = { -1, 1, 1, 1, 1, -1, -1, -1 };
-   pGauss[0].x = -1;
+   pGauss[0].x = 1;
    pGauss[0].y = 1;
    pGauss[1].x = 1;
-   pGauss[1].y = 1;
-   pGauss[2].x = 1;
+   pGauss[1].y = -1;
+   pGauss[2].x = -1;
    pGauss[2].y = -1;
    pGauss[3].x = -1;
-   pGauss[3].y = -1;
+   pGauss[3].y = 1;
    for (int i = 0; i < 4; i++) {
       pGauss[i].id = i;
       pGauss[i].s_x = s_x;

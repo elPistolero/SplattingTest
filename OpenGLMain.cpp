@@ -25,9 +25,9 @@ int timebase = 0;
 int currenttime = 0;
 string strFPS;
 enum {
-   PROJECTION, WIREFRAME
+   PROJECTION, WIREFRAME, MU_X, MU_Y, S_X, S_Y, C
 };
-#define MENU_SIZE 2;
+#define MENU_SIZE 7;
 bool menuStates[] = { true, true};
 unsigned int marked = PROJECTION;
 
@@ -266,17 +266,66 @@ void specialKeyPressed(int key, int x, int y) {
       marked = (marked - 1) % MENU_SIZE;
       break;
    case GLUT_KEY_RIGHT:
-      if (menuStates[marked])
-         menuStates[marked] = false;
-      else
-         menuStates[marked] = true;
+      switch (marked) {
+      case MU_X:
+         mu_x++;
+         break;
+      case MU_Y:
+         mu_y++;
+         break;
+      case S_X:
+         if (s_x >= -0.1 && s_x < 0) // make sure we don't divide by zero
+            s_x += 0.2;
+         else
+            s_x += 0.1;
+         break;
+      case S_Y:
+         if (s_y >= -0.1 && s_y < 0) // make sure we don't divide by zero
+            s_y += 0.2;
+         else
+            s_y += 0.1;
+         break;
+      case C:
+         c_1 += 0.01;
+         break;
+      default:
+         if (menuStates[marked])
+            menuStates[marked] = false;
+         else
+            menuStates[marked] = true;
+         break;
+      }
       break;
    case GLUT_KEY_LEFT:
-      if (menuStates[marked])
-         menuStates[marked] = false;
-      else
-         menuStates[marked] = true;
-      break;
+      switch (marked) {
+      case MU_X:
+         mu_x--;
+         break;
+      case MU_Y:
+         mu_y--;
+         break;
+      case S_X:
+         if (s_x <= 0.1 && s_x > 0) // make sure we don't divide by zero
+            s_x -= 0.2;
+         else
+            s_x -= 0.1;
+         break;
+      case S_Y:
+         if (s_y <= -0.1 && s_y > 0) // make sure we don't divide by zero
+            s_y -= 0.2;
+         else
+            s_y -= 0.1;
+         break;
+      case C:
+         c_1 -= 0.01;
+         break;
+      default:
+         if (menuStates[marked])
+            menuStates[marked] = false;
+         else
+            menuStates[marked] = true;
+         break;
+      }
    }
 }
 
@@ -347,6 +396,18 @@ void drawMenu() {
    else
       drawString("Wireframe: Off", width - ((width / 100) * 15), 50, font,
             marked == WIREFRAME);
+
+   ostringstream muX, muY, sX, sY, c;
+   muX << "mu_x: " << mu_x;
+   muY << "mu_y: " << mu_y;
+   sX << "s_x: " << s_x;
+   sY << "s_y: " << s_y;
+   c << "c: " << c_1;
+   drawString(muX.str(), width - ((width / 100) * 15), 70, font, marked == MU_X);
+   drawString(muY.str(), width - ((width / 100) * 15), 90, font, marked == MU_Y);
+   drawString(sX.str(), width - ((width / 100) * 15), 110, font, marked == S_X);
+   drawString(sY.str(), width - ((width / 100) * 15), 130, font, marked == S_Y);
+   drawString(c.str(), width - ((width / 100) * 15), 150, font, marked == C);
 }
 
 void drawGrid() {

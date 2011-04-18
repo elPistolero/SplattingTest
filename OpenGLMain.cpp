@@ -18,8 +18,8 @@
 using namespace std;
 
 // menu params --------------------------
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1920
+#define HEIGHT 1080
 unsigned int frame = 0;
 int timebase = 0;
 int currenttime = 0;
@@ -66,6 +66,45 @@ GaussVertex pGauss[4];
 // camera coords ------------------------
 GLfloat camera[3] = { 0, 1, 5 };
 GLfloat rotAngle = 0;
+
+// transformation matrices
+GLfloat l = -10;
+GLfloat r = 10;
+GLfloat t = 10;
+GLfloat b = -10;
+GLfloat n = 1;
+GLfloat f = 1000;
+GLfloat viewport[12] =
+{
+      WIDTH/2, 0, 0,
+      0, HEIGHT/2, 0,
+      0, 0, 0,
+      WIDTH/2, HEIGHT/2, 1
+};
+GLint viewportLoc = 0;
+GLfloat projection[16] =
+{
+      /*
+      2/(r - l), 0, 0, 0,
+      0, 2/(t - b), 0, 0,
+      0, 0, -2/(f - n), 0,
+      -(r + l)/(r - l), -(t + b)/(t - b), -(f + n)/(f - n), 1
+      */
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+      0, 0, -1, 1
+};
+GLint projectionLoc = 0;
+// translate back 5 units
+GLfloat modelView[16] =
+{
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, -5, 1
+};
+GLint modelViewLoc = 0;
 
 // misc ---------------------------------
 const float PI = 3.14159265;
@@ -155,6 +194,10 @@ void setupShaders() {
    cLoc = glGetAttribLocation(splattingShader, "c");
    muLoc = glGetAttribLocation(splattingShader, "mu");
    weightLoc = glGetAttribLocation(splattingShader, "weight");
+
+   viewportLoc = glGetUniformLocation(splattingShader, "viewport");
+   projectionLoc = glGetUniformLocation(splattingShader, "projection");
+   modelViewLoc = glGetUniformLocation(splattingShader, "modelView");
 }
 
 void setupVBO() {
@@ -199,39 +242,9 @@ void setupVBO() {
 /*
  * Initializes the OpenGL parameters
  */
-void initOpenGL(int width, int height) {
-   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-   setupShaders();
-   setupVBO();
-
-   glEnable(GL_DEPTH_TEST);
-   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-
-   gluPerspective(45.0f, (GLdouble) width / (GLdouble) height, 1, 1000.0f);
-
-   glMatrixMode(GL_MODELVIEW);
-}
-
 /*
  * handle resizing
  */
-void resizeOpenGLScene(int width, int height) {
-   if (height == 0)
-      height = 1;
-
-   glViewport(0, 0, width, height);
-
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   gluPerspective(45.0f, (GLdouble) width / (GLdouble) height, 1, 1000.0f);
-
-   glMatrixMode(GL_MODELVIEW);
-}
-
 void keyPressed(unsigned char key, int x, int y) {
    if (key == 27) {
       exit(0);
@@ -403,12 +416,14 @@ void drawMenu() {
    drawString(strFPS, width - ((width / 100) * 15), 10, font, false);
 
    // draw the menu
+   /*
    if (menuStates[PROJECTION]) //
       drawString("Projection: Perspective", width - ((width / 100) * 15), 30,
             font, marked == PROJECTION);
    else
       drawString("Projection: Orthogonal", width - ((width / 100) * 15), 30,
             font, marked == PROJECTION);
+   */
 
    if (menuStates[WIREFRAME])
       drawString("Wireframe: On", width - ((width / 100) * 15), 50, font,
@@ -451,26 +466,44 @@ void drawGrid() {
    glEnd();
 }
 
+void initOpenGL(int width, int height) {
+   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+   setupShaders();
+   setupVBO();
+
+   glEnable(GL_DEPTH_TEST);
+}
+
+void resizeOpenGLScene(int width, int height) {
+   if (height == 0)
+      height = 1;
+
+   glViewport(0, 0, width, height);
+   glUniformMatrix4x3fv(viewportLoc, 1, GL_FALSE, viewport);
+}
+
 void drawOpenGLScene() {
-   if (menuStates[PROJECTION]) {
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      gluPerspective(45.0f, (GLdouble) WIDTH / (GLdouble) HEIGHT, 1, 1000.0f);
+   glViewport(0, 0, WIDTH, HEIGHT);
 
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      gluLookAt(camera[0], camera[1], camera[2], 0, 0, -1, 0, 1, 0);
-      glRotatef(rotAngle, 0, 1, 0);
-   } else {
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      glOrtho(-10, 10, -10, 10, 1.0, 1000.0);
 
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-   }
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(-10, 10, -10, 10, 1.0, 1000.0);
+
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   glTranslatef(0, 0, -5);
+
+   GLint* projTmp = new GLint[16];
+   GLint* mwTmp = new GLint[16];
+   glGetIntegerv(GL_PROJECTION_MATRIX, projTmp);
+   glGetIntegerv(GL_MODELVIEW_MATRIX, mwTmp);
+
 
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection);
+   glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelView);
 
    if (menuStates[WIREFRAME])
       drawGrid();

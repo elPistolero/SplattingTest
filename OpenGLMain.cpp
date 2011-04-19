@@ -18,8 +18,8 @@
 using namespace std;
 
 // menu params --------------------------
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 1600
+#define HEIGHT 1200
 unsigned int frame = 0;
 int timebase = 0;
 int currenttime = 0;
@@ -84,16 +84,10 @@ GLfloat viewport[12] =
 GLint viewportLoc = 0;
 GLfloat projection[16] =
 {
-      /*
       2/(r - l), 0, 0, 0,
       0, 2/(t - b), 0, 0,
       0, 0, -2/(f - n), 0,
       -(r + l)/(r - l), -(t + b)/(t - b), -(f + n)/(f - n), 1
-      */
-      0, 0, 0, 0,
-      0, 0, 0, 0,
-      0, 0, 0, 0,
-      0, 0, -1, 1
 };
 GLint projectionLoc = 0;
 // translate back 5 units
@@ -485,30 +479,15 @@ void resizeOpenGLScene(int width, int height) {
 
 void drawOpenGLScene() {
    glViewport(0, 0, WIDTH, HEIGHT);
-
-
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrtho(-10, 10, -10, 10, 1.0, 1000.0);
-
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   glTranslatef(0, 0, -5);
-
-   GLint* projTmp = new GLint[16];
-   GLint* mwTmp = new GLint[16];
-   glGetIntegerv(GL_PROJECTION_MATRIX, projTmp);
-   glGetIntegerv(GL_MODELVIEW_MATRIX, mwTmp);
-
-
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection);
-   glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelView);
 
    if (menuStates[WIREFRAME])
       drawGrid();
 
    glUseProgram(splattingShader);
+
+   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0]);
+   glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, &modelView[0]);
 
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
    glBufferData(GL_ARRAY_BUFFER, sizeof(GaussVertex)*4, &pGauss[0].x, GL_DYNAMIC_DRAW); // is this efficient?

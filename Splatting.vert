@@ -40,30 +40,28 @@ void main () {
         normVec2 = eigenVec2;
     }
     
+    mat4 mvp = projection * modelView;
+    
     if (quadVert.z == 0) {
        vec2 e1 = normVec1 * val1;
        vec2 e2 = normVec2 * val2; 
        vec2 c1 = mu.xy + e1 + e2;
-       //gl_Position = projection * modelView * vec4(c1, 0, 1);
-       gl_Position = gl_ModelViewProjectionMatrix * vec4(c1, 0, 1);
+       gl_Position = mvp * vec4(c1, 0, 1);
     } else if (quadVert.z == 1) {
        vec2 e1 = normVec1 * val1;
        vec2 e4 = -normVec2 * val2; 
        vec2 c2 = mu.xy + e1 + e4;
-       //gl_Position = projection * modelView * vec4(c2, 0, 1);
-       gl_Position = gl_ModelViewProjectionMatrix * vec4(c2, 0, 1);
+       gl_Position = mvp * vec4(c2, 0, 1);
     } else if (quadVert.z == 2) {
        vec2 e3 = -normVec1 * val1;
        vec2 e4 = -normVec2 * val2; 
        vec2 c3 = mu.xy + e3 + e4;
-       //gl_Position = projection * modelView * vec4(c3, 0, 1);
-       gl_Position = gl_ModelViewProjectionMatrix * vec4(c3, 0, 1);
+       gl_Position = mvp * vec4(c3, 0, 1);
     } else if (quadVert.z == 3) {
        vec2 e2 = -normVec1 * val1;
        vec2 e3 = normVec2 * val2; 
        vec2 c4 = mu.xy + e2 + e3;
-       //gl_Position = projection * modelView * vec4(c4, 0, 1);
-       gl_Position = gl_ModelViewProjectionMatrix * vec4(c4, 0, 1);
+       gl_Position = mvp * vec4(c4, 0, 1);
     }
     
     vec4 clipCoord = projection * modelView * vec4(mu.xy, -1, 1);

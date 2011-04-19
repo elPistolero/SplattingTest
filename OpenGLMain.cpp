@@ -474,7 +474,6 @@ void resizeOpenGLScene(int width, int height) {
       height = 1;
 
    glViewport(0, 0, width, height);
-   glUniformMatrix4x3fv(viewportLoc, 1, GL_FALSE, viewport);
 }
 
 void drawOpenGLScene() {
@@ -488,6 +487,7 @@ void drawOpenGLScene() {
 
    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0]);
    glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, &modelView[0]);
+   glUniformMatrix4x3fv(viewportLoc, 1, GL_FALSE, viewport);
 
    glBindBuffer(GL_ARRAY_BUFFER, gaussVBO);
    glBufferData(GL_ARRAY_BUFFER, sizeof(GaussVertex)*4, &pGauss[0].x, GL_DYNAMIC_DRAW); // is this efficient?

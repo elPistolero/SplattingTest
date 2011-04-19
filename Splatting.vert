@@ -17,7 +17,7 @@ out float fragDetV;
 
 void main () {
     float trace = s.x + s.y;
-    float det = s.x*s.y - pow(c.x, 2);
+    float det = s.x*s.y - c.x * c.x;
     mat2 V = mat2(s.x, c.x, c.x, s.y);
     mat2 Q = mat2(s.y, -c.x, -c.x, s.x) * 1/det; 
     
@@ -64,9 +64,28 @@ void main () {
        gl_Position = mvp * vec4(c4, 0, 1);
     }
     
-    vec4 clipCoord = projection * modelView * vec4(mu.xy, -1, 1);
-    //vec3 NDC = vec3(clipCoord.x/clipCoord.w, clipCoord.y/clipCoord.w, clipCoord.z/clipCoord.w); // normalized device coordinates
-    fragMu = viewport * clipCoord; 
+    // object coordinates -(modelView matrix)-> eye coordinates
+    // eye coordinates -(projection matrix)-> clip coordinates
+    // clip coordinates -(dehomogenize)-> normalized device coordinates
+    // normalized device coordinates -(viewport transformation)-> window coordinates
+    // viewport transformation: http://www.songho.ca/opengl/gl_transform.html
+    // glViewport(x,y,w,h);
+    // glDepthRange(n,f);
+    //  x = (w/2)*x_ndc + (x + w/2);
+    //  y = (h/2)*y_ndc + (y + h/2);
+    //  z = ((f-n)/2)*z_ndc + (f+n)/2;
+    
+    float x = 0;
+    float y = 0;
+    float width = 1600;
+    float height = 1200;
+    float n = -1;
+    float f = 1;
+    vec4 clipCoord = projection * modelView * vec4(mu.xy, 0, 1);
+    vec3 ndc = vec3(clipCoord.x/clipCoord.w, clipCoord.y/clipCoord.w, clipCoord.z/clipCoord.w);
+    fragMu.x = (width/2)*ndc.x + (x + width/2);
+    fragMu.y = (height/2)*ndc.y + (y + height/2);
+    fragMu.z = ((f-n)/2)*ndc.z + ((f+n)/2);
     fragV = V;
     fragDetV = det;
     fragQ = Q;

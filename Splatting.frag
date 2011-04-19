@@ -8,17 +8,17 @@ in mat2 fragQ;
 out vec4 frag_color;
 
 void main () {
-    //const float PI = 3.14159265358979323846264;
-    //vec2 winCoord = fragMu.xy/fragMu.z;
-	//vec2 dis = gl_FragCoord.xy - fragMu;
-	//vec2 tmp = fragQ * dis;
-	//float r = dis.x*tmp.x + dis.y*tmp.y;
+    const float PI = 3.14159265358979323846264;
+	vec2 dis = gl_FragCoord.xy - fragMu.xy;
+	vec2 tmp = fragQ * dis;
+	float r = dis.x*tmp.x + dis.y*tmp.y;
 	
-	//if (r < 4) {
-	 //  float footprint = 1/(2*PI) * inversesqrt(fragDetV) * exp(-r/2);
-	  // frag_color = vec4(1, 0, 0, footprint);
-	//} else {
-	   frag_color = vec4(0, 0, 1, 1);
-		//frag_color = vec4(distance(gl_FragCoord.xy, winCoord.xy), 1, distance(gl_FragCoord.xy, winCoord.xy), 1);
-   //}
+	if (r < 400) {
+	   float footprint = 1/(2*PI) * inversesqrt(fragDetV) * exp(-r/2);
+	   frag_color = vec4(1/footprint, 1/footprint, 1/footprint, 1);
+	} else {
+	  frag_color = vec4(0, 0, 1, 1);
+	}
+	//float dist = distance(fragMu.xy, gl_FragCoord.xy);
+	//frag_color = vec4(1, 1/dist, 1/dist, 1/dist);
 }

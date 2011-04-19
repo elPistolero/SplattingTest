@@ -12,13 +12,11 @@ void main () {
 	vec2 dis = gl_FragCoord.xy - fragMu.xy;
 	vec2 tmp = fragQ * dis;
 	float r = dis.x*tmp.x + dis.y*tmp.y;
-	
+
 	if (r < 400) {
 	   float footprint = 1/(2*PI) * inversesqrt(fragDetV) * exp(-r/2);
 	   frag_color = vec4(1/footprint, 1/footprint, 1/footprint, 1);
 	} else {
 	  frag_color = vec4(0, 0, 1, 1);
 	}
-	//float dist = distance(fragMu.xy, gl_FragCoord.xy);
-	//frag_color = vec4(1, 1/dist, 1/dist, 1/dist);
 }

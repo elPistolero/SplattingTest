@@ -42,15 +42,15 @@ GLint sLoc = 0;
 GLint cLoc = 0;
 GLint weightLoc = 0;
 
-GLfloat s_x = 1;
-GLfloat s_y = 1;
+GLfloat s_x = 4;
+GLfloat s_y = 4;
 GLfloat s_z = 1;
-GLfloat c_1 = 0;
+GLfloat c_1 = 1;
 GLfloat c_2 = 0;
 GLfloat c_3 = 0;
 GLfloat mu_x = 0;
 GLfloat mu_y = 0;
-GLfloat mu_z = -1;
+GLfloat mu_z = 0;
 GLfloat weight = 1;
 
 struct GaussVertex {

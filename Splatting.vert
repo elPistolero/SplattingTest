@@ -16,50 +16,45 @@ out mat2 fragQ;
 out float fragDetV;
 
 void main () {
+    mat4 mvp = projection * modelView;
+    
     float trace = s.x + s.y;
     float det = s.x*s.y - c.x * c.x;
     mat2 V = mat2(s.x, c.x, c.x, s.y);
     mat2 Q = mat2(s.y, -c.x, -c.x, s.x) * 1/det; 
     
-    float val1 = (trace + sqrt(pow(trace, 2) - 4*det))/2;
-    float val2 = (trace - sqrt(pow(trace, 2) - 4*det))/2;
+    // calculates the eigenvalues
+    float root = sqrt( ((trace*trace)/4) - det );
+    float val1 = trace/2 + root;
+    float val2 = trace/2 - root;
     
-    vec2 eigenVec1;
-    vec2 eigenVec2;
-    vec2 normVec1;
-    vec2 normVec2;
-    if (c.x != 0) {
-        eigenVec1 = vec2(val1 - s.y, c.x);
-        eigenVec2 = vec2(val2 - s.y, c.x);
-        normVec1 = normalize(eigenVec1);
-        normVec2 = normalize(eigenVec2);
-    } else {
-        eigenVec1 = vec2(1, 0);
-        eigenVec2 = vec2(0, 1);
-        normVec1 = eigenVec1;
-        normVec2 = eigenVec2;
-    }
+    // calculates the unit eigenvectors
+    // assumes c != 0
+    vec2 eigenVec1 = normalize(vec2(val1 - s.y, c.x));
+    vec2 eigenVec2 = normalize(vec2(val2 - s.y, c.x));
     
-    mat4 mvp = projection * modelView;
+    // calculates the distance of the ellipse-axes
+    float dist1 = sqrt(val1);
+    float dist2 = sqrt(val2);
     
     if (quadVert.z == 0) {
-       vec2 e1 = normVec1 * val1;
-       vec2 e2 = normVec2 * val2; 
+       vec2 e1 = eigenVec1 * dist1;
+       vec2 e2 = eigenVec2 * dist2; 
        vec2 c1 = mu.xy + e1 + e2;
        gl_Position = mvp * vec4(c1, 0, 1);
     } else if (quadVert.z == 1) {
-       vec2 e1 = normVec1 * val1;
-       vec2 e4 = -normVec2 * val2; 
+       vec2 e1 = eigenVec1 * dist1;
+       vec2 e4 = -eigenVec2 * dist2; 
        vec2 c2 = mu.xy + e1 + e4;
        gl_Position = mvp * vec4(c2, 0, 1);
     } else if (quadVert.z == 2) {
-       vec2 e3 = -normVec1 * val1;
-       vec2 e4 = -normVec2 * val2; 
+       vec2 e3 = -eigenVec1 * dist1;
+       vec2 e4 = -eigenVec2 * dist2; 
        vec2 c3 = mu.xy + e3 + e4;
        gl_Position = mvp * vec4(c3, 0, 1);
     } else if (quadVert.z == 3) {
-       vec2 e2 = -normVec1 * val1;
-       vec2 e3 = normVec2 * val2; 
+       vec2 e2 = -eigenVec1 * dist1;
+       vec2 e3 = eigenVec2 * dist2; 
        vec2 c4 = mu.xy + e2 + e3;
        gl_Position = mvp * vec4(c4, 0, 1);
     }

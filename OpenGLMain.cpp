@@ -542,12 +542,11 @@ int main(int argc, char **argv) {
 
    glutReshapeFunc(&resizeOpenGLScene);
 
-   glewExperimental = GL_TRUE;
    glewInit();
-   if (glewIsSupported("GL_VERSION_3_2"))
-      printf("Ready for OpenGL 3.2\n");
+   if (glewIsSupported("GL_VERSION_3_0"))
+      printf("Ready for OpenGL 3.0\n");
    else {
-      printf("OpenGL 3.2 not supported\n");
+      printf("OpenGL 3.0 not supported\n");
       exit(1);
    }
 
